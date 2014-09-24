@@ -7,6 +7,10 @@ pw <- spTransform(pw, CRS("+init=epsg:27700")) # transform CRS to OSGB
 library(rgeos)
 geosel <- spTransform(pw, CRS("+init=epsg:4326"))
 
+tweets[[1]]$coordinates$coordinates
+tweets[[1]]$geo$coordinates
+tweets[[1]]$favorite_count
+
 # Setup
 library(rjson) # library used to load .json files
 files <- list.files(path = "data/chunked/", full.names=T)
@@ -34,10 +38,9 @@ n_tweets <- sapply(tweets, function(x) x$user$statuses_count)
 n_followers <- sapply(tweets, function(x) x$user$followers_count)
 n_following <- sapply(tweets, function(x) x$user$friends_count)
 user_location <- sapply(tweets, function(x) x$user$location)
+n_rts <- sapply(tweets, function(x) x$retweet_count)
+n_fav <- sapply(tweets, function(x) x$favorite_count)
 
-tweets[[1]]$coordinates$coordinates
-tweets[[1]]$geo$coordinates
-tweets[[1]]$geo$type
 user_description <- sapply(tweets, function(x) x$user$description)
 user_id <- sapply(tweets, function(x) x$user$id)
 user_idstr <- sapply(tweets, function(x) x$user$id_str)
@@ -47,19 +50,20 @@ user_screen_name <- sapply(tweets, function(x) x$user$screen_name)
 
 t_out <- data.frame(text, lat = coords[,2], lon = coords[,1], created,
   language, n_followers, user_created, n_tweets, n_followers, n_following,
-  user_location)
+  n_fav, n_rts, user_location)
 
 ### geo selection part
 geoT <- SpatialPointsDataFrame(coords= matrix(c(t_out$lon, t_out$lat), ncol=2), data=t_out)
 proj4string(geoT) <- CRS("+init=epsg:4326")
 t_out <- geoT[geosel, ]@data
-sel <- grepl("shop|buy|bought|expensive|cheap|bargain|store|visit", geoT$text, ignore.case = T ) # selection
+sel <- grepl("shop|buy|bought|expensive|cheap|bargain|store|visit", t_out$text, ignore.case = T ) # selection
 
-t_sel <- t_out[sel, ])
+t_out <- t_out[sel, ]
 
-t_out$filenum <- which(files == i)
-write.csv(t_sel, file = paste0("data/output",which(files == i),".csv"))
-print(paste0(which(files == i) / length(files) * 100, "% done"))
+
+filenum <- which(files == i)
+write.csv(t_out, file = paste0("data/output",which(files == i),".csv"), )
+if( filenum %% 100 == 0 ) print(paste0(which(files == i) / length(files) * 100, "% done"))
 nlines <- nlines + nrow(t_out)
 }
 
@@ -75,4 +79,4 @@ for(j in outs[-1]){
   num <- which(outs == j)
 }
 summary(output)
-write.csv(output, "output-pennine.csv")
+write.csv(output, "output-retail.csv")
