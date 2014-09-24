@@ -5,6 +5,7 @@
 build/
 dist/
 data/
+firehose/
 tweepy.egg-info/
 .env/
 .coverage
@@ -14,7 +15,11 @@ htmlcov/
 .Rhistory
 *orig
 credentials.ini
+<<<<<<< HEAD
 *Data
 .Rhistory
 .csv
 *.csv
+=======
+SETUP
+>>>>>>> upstream/master
