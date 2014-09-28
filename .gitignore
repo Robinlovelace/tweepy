@@ -20,3 +20,5 @@ credentials.ini
 .Rhistory
 *.csv
 CONFIGPARSER_SETUP_NOTES
+ggmap
+ggmap*

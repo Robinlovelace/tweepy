@@ -92,3 +92,4 @@ for(j in outs[-1]){
 }
 summary(output)
 write.csv(output, "output.csv")
+setwd(old)

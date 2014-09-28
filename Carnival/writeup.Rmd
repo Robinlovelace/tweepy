@@ -17,20 +17,123 @@ above and beyond official estimates of the turnout.
 ## The data
 
 As a baseline dataset, we used all geotagged tweets in the UK between the 20^th^ August
-until the 28^th^ August, providing a window before and after the event to identify its
+until the 28^th^ August. This consisted of 10 raw input `.json` files, harvested using
+the Python-based tweet streamer
+[tweepy](https://github.com/Robinlovelace/tweepy), and occupying **30 Gb** of hard disk space.
+The time window extended before and after the carnival to enable identification its
 social media impact relative to the baseline.
 
 The area of particular interest was the zone of the routes, shown in the figure below.
 All tweets sent within this zone were filtered out from the national dataset and then
-analysed.
+analysed. The script
+['BigLoad.R'](https://github.com/Robinlovelace/tweepy/blob/master/BigLoad.R)
+was used to extract tweets within the study area,
+reducing the size of the dataset from 30 Gb to a more manageable 400 Kb,
+1/75,000^th^ the size of the original dataset!
 
-![]()
+![The carnival boundary based on online maps]("data/carnival/carnival-bounds.png")
 
-You can also embed plots, for example:
+## Analysis
 
-```{r, echo=FALSE}
-plot(cars)
-"/scr"
+The filtered tweets are stored in 'output.csv' and can be loaded with the following command,
+which tells us that a total of 2,268 tweets were recorded in total:
+
+```{r}
+ct <- read.csv("output.csv", as.is = TRUE)
+nrow(ct)
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+Interestingly, there were no more tweets sent during the carnival than
+usual.
+
+```{r, echo=FALSE}
+# Pre-processing of carnival tweets
+library(ggmap)
+library(scales)
+ct$created <- strptime(ct$created, "%Y-%m-%d %H:%M:%S")
+# range(ct$created)
+ggplot(ct) + geom_histogram(aes(x = created), binwidth = 24*60*60) + xlab("Date (August 2014)") +
+  geom_vline(xintercept = as.numeric(strptime( c("2014-08-17 00:00:00", "2014-08-25 23:00:00"), format = "%Y-%m-%d %H:%M:%S"))) +
+  scale_x_datetime(breaks = date_breaks(width = "1 day"), labels = date_format("%a%d")) +
+  theme(axis.text.x = element_text(angle = 90))
+```
+
+When we look at tweets containing 'carnival, there is a social media signal, which
+peaks on Monday 25^th^. 77 tweets contained the word Carnival (3%), far above the national
+average of tweets containing this word, showing the event had a substantial social media footprint.
+
+```{r, echo=FALSE, warning=FALSE}
+cn <- ct[grep("carnival|music|danc|west|fest|potter", ct$text, ignore.case = TRUE), ]
+cn <- ct[grep("carnival", ct$text, ignore.case = TRUE), ]
+ggplot(cn) + geom_histogram(aes(x = created), binwidth = 24*60*60) + xlab("Date (August 2014)") +
+  geom_vline(xintercept = as.numeric(strptime( c("2014-08-17 00:00:00", "2014-08-25 23:00:00"), format = "%Y-%m-%d %H:%M:%S"))) +
+  scale_x_datetime(breaks = date_breaks(width = "1 day"), labels = date_format("%a%d")) +
+  theme(axis.text.x = element_text(angle = 90))
+```
+
+## Spatial analysis
+
+A 'ground truth' on the location of the tweets was undertaken by plotting all
+messages in the study area with tweets containing the word "carnival".
+The results clearly show that people tweeting about the carnival tended to
+be located in some of its focal points, in Potternewton park (northeast of the map)
+and on Chapeltown road (in the centre of the map).
+
+```{r Map of geolocated messages, echo=FALSE, warning=FALSE}
+geoc <- SpatialPointsDataFrame(coords= matrix(c(ct$lon, ct$lat), ncol=2), data=ct)
+geoc$Text <- "Other"
+geoc$Text[grep("carnival|music|danc|west|fest|potter", ct$text, ignore.case = TRUE)] <- "Carnival"
+ggmap(ggmap = get_map(location = bbox(geoc))) +
+  geom_point(aes(x = lon, y = lat, color = Text), data = geoc@data)
+```
+
+It would be interesting to see how the number of people tweeting about the event fluctuated
+over time, but there are insufficient data points for space-time analysis at this stage.
+
+## Text
+
+After some preprocessing to remove punctuation, 'stopwords' (e.g. 'and', 'his', 'to'),
+html links and blank space, the average number of words per tweet was found to be just
+under 10.
+
+```{r Number of words per tweet, echo=FALSE}
+library(tm)
+library(stringr)
+ct$text <- removePunctuation(geoc$text)
+ct$text <- gsub("http.*\\S", "", ct$text) # fail
+ct$text <- str_replace_all(ct$text, "[^[:alnum:]]", " ") # remove all alphanumeric
+ct$text = str_replace_all(ct$text, pattern = "\\s+", " ") # remove all excessive whitespace
+trim_ws <- function (x) gsub("^\\s+|\\s+$", "", x)
+ct$text <- trim_ws(ct$text)
+# Encoding(ct$text) <- "UTF-8"
+# iconv(ct$text, "UTF-8", "UTF-8",sub='')
+# ct$text[3] <- NA
+ct$text <- tolower(ct$text)
+ct$text <- removeWords(ct$text, stopwords("english"))
+head(ct$text, 50)
+wordlist <- str_split(ct$text, pattern = " ")
+head(wordlist)
+words_per_tweet <- sapply(wordlist, length)
+qplot(words_per_tweet, geom = "histogram")
+```
+
+The most frequently used words overall, and in those containing 'carnival'
+are shown below.
+
+```{r, echo=FALSE}
+all_words <- unlist(wordlist)
+unique_words <- unique(all_words)
+count_words_alt <- table(all_words)
+for (i in 1:length(unique_words)) {
+count_words[i] = sum(all_words == unique_words[i])
+names(count_words)[i] <- unique_words[i]
+}
+
+# head(count_words)
+sort(count_words, decreasing = T )[1:20]
+library(wordcloud)
+```
+
+
+
+
