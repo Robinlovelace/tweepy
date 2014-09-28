@@ -18,8 +18,5 @@ credentials.ini
 <<<<<<< HEAD
 *Data
 .Rhistory
-.csv
 *.csv
-=======
-SETUP
->>>>>>> upstream/master
+CONFIGPARSER_SETUP_NOTES

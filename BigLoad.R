@@ -1,25 +1,34 @@
 # BigLoad.R - for loading large amounts of twitter data into R
+library(rgdal)
+library(maptools)
+library(rjson) # library used to load .json files
+
+# Set parameters:
+json_loc <- "/scratch/tweepy/data/carnival/" # where are the raw .json files stored? (json location)
+csv_des <- "/scratch/tweepy/data/carnival/csv/" # where will the .csv files go? (must exist)
+text_string <- "" # only save messages that include this string # omitted by default "" means all tweets
+bounds <- readOGR("/scratch/tweepy/Carnival/", "geosel") # load the polygons that will filter the tweets
+proj4string(bounds) <- CRS("+init=epsg:4326")
 
 # Unzip the files saved by tweepy (see https://github.com/Robinlovelace/tweepy)
 # If the files are too large, they may need splitting up:
-getwd()
-x <- list.files(path = "data/unzipped/", full.names = T, pattern = "json$")
+old <- setwd(json_loc) # the directory of files you want to load
+x <- list.files(pattern = "json") 
 i <- x[1]
 start_time <- Sys.time()
 for(i in x){
-  mess <- paste0("split -l 10000 ", i, " split-", i)
+  mess <- paste0("split -l 100000 ", i, " split-", i) # chunks of 1 million
   system(mess)
   print(x[i])
 }
 (split_time <- Sys.time() - start_time)
-system("mkdir data/chunked") # copy chunked pieces into one directory
-
 
 # Save to "unzipped" (e.g. with gunzip), load these files
-library(rjson) # library used to load .json files
-files <- list.files(path = "data/chunked/", full.names=T)
+files <- list.files(pattern = "split") # only select files that have been split
 # i <- files[1] # uncomment to load 1
 start_time <- Sys.time()
+
+# The per file for loop
 for(i in files){
 # tweets <- fromJSON(sprintf("[%s]", paste(readLines(i, n=1000), collapse=","))) # test subset
   tryCatch({
@@ -50,16 +59,30 @@ t_out <- data.frame(text, lat = coords[,2], lon = coords[,1], created,
   language, n_followers, user_created, n_tweets, n_followers, n_following,
   user_location)
 
-# sel <- grepl("a", t_out$text, ignore.case = T ) # test selection
+sel <- grepl(text_string, t_out$text, ignore.case = T ) # text filter 
+
+# Geo part
+geoT <- SpatialPointsDataFrame(coords= matrix(c(t_out$lon, t_out$lat), ncol=2), data=t_out)
+proj4string(geoT) <- CRS("+init=epsg:4326")
+geosel <- geoT[bounds, ]
+tsel <- geoT[0, ] # geoT[sel, ] # use sel to include geo tweets
+output <- spRbind(geosel, tsel) # remove if only geosel is of interest
 
 t_out$filenum <- which(files == i)
-write.csv(t_out[sel, ], file = paste0("data/output",which(files == i),".csv"))
+write.csv(output, file = paste0(csv_des, which(files == i),".csv"))
+print(paste0(which(files == i) / length(files) * 100, "% done"))
+nlines <- nlines + nrow(t_out)
+
+t_out$filenum <- which(files == i)
+write.csv(output@data, file = paste0(csv_des, which(files == i),".csv"))
 print(paste0(which(files == i) / length(files) * 100, "% done"))
 }
 end_time <- Sys.time()
 (time_taken <- end_time - start_time) 
 
-outs <- list.files(path = "data/", pattern=".csv", full.names=T)
+
+# read the files back in!
+outs <- list.files(path = csv_des, pattern=".csv", full.names=T)
 output <- read.csv(outs[1])
 for(j in outs[-1]){
   tryCatch({

@@ -1,0 +1,36 @@
+---
+title: "Twitter analysis of the West Indian Carnival"
+author: "Robin Lovelace"
+date: "27/09/2014"
+output: html_document
+---
+
+## Introduction
+
+The West Indian Carnival takes place in late August each year in Leeds, attracting tens of
+thousands of people to Chapeltown, a multi-cultural area to the north of the city centre.
+In 2014 the event was held from the 17^th^ until the 25^th^ of August.
+
+This report investigates what social media data might be able to tell us about the event,
+above and beyond official estimates of the turnout.
+
+## The data
+
+As a baseline dataset, we used all geotagged tweets in the UK between the 20^th^ August
+until the 28^th^ August, providing a window before and after the event to identify its
+social media impact relative to the baseline.
+
+The area of particular interest was the zone of the routes, shown in the figure below.
+All tweets sent within this zone were filtered out from the national dataset and then
+analysed.
+
+![]()
+
+You can also embed plots, for example:
+
+```{r, echo=FALSE}
+plot(cars)
+"/scr"
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
