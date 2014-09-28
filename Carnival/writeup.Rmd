@@ -19,8 +19,8 @@ the analysis can be viewed online at [github.com/robinlovelace/tweepy](https://g
 
 ## The data
 
-As a baseline dataset, we used all geotagged tweets in the UK between the 20^th^ August
-until the 28^th^ August. This consisted of 10 raw input `.json` files, harvested using
+As a baseline dataset, we used all geotagged tweets in the UK between the 6^th^ August
+until the 28^th^. This consisted of 10 raw input `.json` files, harvested using
 the Python-based tweet streamer
 [tweepy](https://github.com/Robinlovelace/tweepy), and occupying **30 Gb** of hard disk space.
 The time window extended before and after the carnival to enable identification its
