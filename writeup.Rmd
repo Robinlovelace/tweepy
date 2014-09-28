@@ -3,8 +3,11 @@ title: "Twitter analysis of the West Indian Carnival"
 author: "Robin Lovelace"
 date: "27/09/2014"
 output:
+  word_document: default
   pdf_document:
     fig_caption: yes
+    latex_engine: xelatex
+  html_document: default
 ---
 
 ## Introduction
@@ -33,12 +36,7 @@ was used to extract tweets within the study area,
 reducing the size of the dataset from 30 Gb to a more manageable 400 Kb,
 1/75,000^th^ the size of the original dataset!
 
-```{r, fig.cap="The carnival boundary based on online maps", fig.width=4, fig.height=3, echo=FALSE}
-library(png)
-library(grid)
-img <- readPNG("~/repos/tweepy/Carnival/carnival-bounds.png")
-grid.raster(img)
-```
+![The carnival boundary based on online maps]("carnival-bounds.png")
 
 ## Analysis
 
@@ -53,7 +51,7 @@ ct <- read.csv("~/repos/tweepy/Carnival/output.csv", as.is = TRUE)
 Interestingly, there were no more tweets sent during the carnival than
 usual.
 
-```{r, fig.cap="Histogram of tweet frequency in study area", echo=FALSE, message=FALSE, fig.width=5, fig.height=2}
+```{r Histogram of tweet frequency in study area, echo=FALSE, message=FALSE}
 # Pre-processing of carnival tweets
 library(ggmap)
 library(scales)
@@ -69,7 +67,7 @@ When we look at tweets containing 'carnival, there is a social media signal, whi
 peaks on Monday 25^th^. 77 tweets contained the word Carnival (3%), far above the national
 average of tweets containing this word, showing the event had a substantial social media footprint.
 
-```{r, fig.cap="Histogram of carnival tweets", echo=FALSE, warning=FALSE, message=FALSE, fig.width=5, fig.height=2}
+```{r Histogram of carnival tweets, echo=FALSE, warning=FALSE, message=FALSE}
 # cn <- ct[grep("carnival|music|danc|west|fest|potter", ct$text, ignore.case = TRUE), ]
 cn <- ct[grep("carnival", ct$text, ignore.case = TRUE), ]
 ggplot(cn) + geom_histogram(aes(x = created), binwidth = 24*60*60) + xlab("Date (August 2014)") +
@@ -86,7 +84,7 @@ The results clearly show that people tweeting about the carnival tended to
 be located in some of its focal points, in Potternewton park (northeast of the map)
 and on Chapeltown road (in the centre of the map).
 
-```{r, fig.cap="Map of geolocated messages", echo=FALSE, warning=FALSE, message=FALSE}
+```{r Map of geolocated messages, echo=FALSE, warning=FALSE, message=FALSE}
 library(rgdal)
 geoc <- SpatialPointsDataFrame(coords= matrix(c(ct$lon, ct$lat), ncol=2), data=ct)
 geoc$Text <- "Other"
@@ -98,15 +96,13 @@ ggmap(ggmap = get_map(location = bbox(geoc))) +
 It would be interesting to see how the number of people tweeting about the event fluctuated
 over time, but there are insufficient data points for space-time analysis at this stage.
 
-\clearpage
-
 ## Text
 
 After some preprocessing to remove punctuation, 'stopwords' (e.g. 'and', 'his', 'to'),
 html links and blank space, the average number of words per tweet was found to be just
 under 10.
 
-```{r, fig.cap="Word cloud of words overall", echo=FALSE, message=FALSE}
+```{r Word cloud of words overall, echo=FALSE, message=FALSE}
 library(tm)
 library(stringr)
 ct$text <- removePunctuation(geoc$text)
@@ -124,13 +120,13 @@ ct$text <- removeWords(ct$text, stopwords("english"))
 wordlist <- str_split(ct$text, pattern = " ")
 # head(wordlist)
 words_per_tweet <- sapply(wordlist, length)
-# qplot(words_per_tweet, geom = "histogram")
+qplot(words_per_tweet, geom = "histogram")
 ```
 
 The most frequently used words overall, and in those containing 'carnival'
 are shown below.
 
-```{r, fig.cap="Word cloud of carnival tweets", echo=FALSE, warning=FALSE}
+```{r Word cloud of carnival tweets, echo=FALSE, warning=FALSE}
 all_words <- unlist(wordlist)
 unique_words <- unique(all_words)
 count_words_alt <- table(all_words)
@@ -146,7 +142,7 @@ library(wordcloud)
 wordcloud(unique_words, freq = count_words, scale = c(200, 0.1), min.freq = 20)
 ```
 
-```{r, fig.cap="Wordcloud of carnival tweets", echo=FALSE, warning=FALSE}
+```{r, echo=FALSE, warning=FALSE}
 wordlist <- str_split(ct$text[grep("carnival", ct$text, ignore.case = TRUE)], pattern = " ")
 words_per_tweet <- sapply(wordlist, length)
 all_words <- unlist(wordlist)
@@ -157,15 +153,14 @@ for (i in 1:length(unique_words)) {
 count_words[i] = sum(all_words == unique_words[i])
 names(count_words)[i] <- unique_words[i]
 }
+"wordcloud.png"
 # head(count_words)
 # sort(count_words, decreasing = T )[1:20]
-wordcloud(unique_words, freq = count_words, scale = c(50, 0.1), min.freq = 2)
+# wordcloud(unique_words, freq = count_words, scale = c(50, 0.1), min.freq = 2)
 ```
 
-```{r Wordcloud of Carnival tweets, echo=FALSE}
-# img <- readPNG("~/repos/tweepy/Carnival/wordcloud.png")
-# grid.raster(img)
-```
+![Wordcloud of Carnival tweets]("Carnival/wordcloud.png")
+
 
 
 

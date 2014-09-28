@@ -22,3 +22,5 @@ credentials.ini
 CONFIGPARSER_SETUP_NOTES
 ggmap
 ggmap*
+*.docx
+*.pdf
