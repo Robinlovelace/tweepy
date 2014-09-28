@@ -24,3 +24,5 @@ ggmap
 ggmap*
 *.docx
 *.pdf
+*.Rhistory
+.Rhistory
