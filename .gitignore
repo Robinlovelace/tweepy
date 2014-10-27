@@ -15,7 +15,6 @@ htmlcov/
 .Rhistory
 *orig
 credentials.ini
-<<<<<<< HEAD
 *Data
 .Rhistory
 *.csv
